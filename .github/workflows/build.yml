@@ -1,0 +1,62 @@
+name: Build Super Web
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译并打包未签名 IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+
+      - name: 查看 Xcode 环境
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: 编译 Release（关闭签名）
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project SuperWeb.xcodeproj \
+            -scheme SuperWeb \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | tail -n 120
+
+      - name: 打包未签名 IPA
+        run: |
+          APP_PATH="build/Build/Products/Release-iphoneos/SuperWeb.app"
+          test -d "$APP_PATH" || { echo "没找到 .app 产物"; exit 1; }
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -qry SuperWeb-unsigned.ipa Payload
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" SuperWeb-unsigned.zip
+          ls -lh SuperWeb-unsigned.ipa SuperWeb-unsigned.zip
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_PATH/Info.plist"
+
+      - name: 上传完整编译日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: 上传 IPA 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: SuperWeb-unsigned-ipa
+          path: |
+            SuperWeb-unsigned.ipa
+            SuperWeb-unsigned.zip

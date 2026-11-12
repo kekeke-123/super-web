@@ -1,0 +1,15 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+Payload/
+
+# macOS / 编辑器
+.DS_Store
+.idea/
+.vscode/
