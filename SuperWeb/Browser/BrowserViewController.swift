@@ -652,9 +652,9 @@ final class BrowserViewController: UIViewController {
 extension BrowserViewController: UITextFieldDelegate {
 
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        if let beginning = textField.beginningOfDocument, let end = textField.endOfDocument {
-            textField.selectedTextRange = textField.textRange(from: beginning, to: end)
-        }
+        let beginning = textField.beginningOfDocument
+        let end = textField.endOfDocument
+        textField.selectedTextRange = textField.textRange(from: beginning, to: end)
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
